@@ -1,0 +1,11 @@
+backend/venv/
+__pycache__/
+*.pyc
+backend/model.joblib
+backend/labels.json
+backend/landmarks_dataset.csv
+.DS_Store
+
+**/*.md
+**/*test*
+!README.md

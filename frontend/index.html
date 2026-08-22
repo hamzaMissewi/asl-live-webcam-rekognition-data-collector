@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>ASL Live — Traducteur de langue des signes</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+            rel="stylesheet" />
+
+        <style>
+            :root {
+                --ink: #0e1717;
+                --surface: #16211f;
+                --surface-2: #1c2926;
+                --paper: #efe9de;
+                --muted: #8ca19c;
+                --gold: #e3a23c;
+                --teal: #4fd1ae;
+                --line: #2a3835;
+                --danger: #d9694f;
+                --font-display: 'Fraunces', serif;
+                --font-ui: 'Space Grotesk', sans-serif;
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                background: var(--ink);
+                color: var(--paper);
+                font-family: var(--font-ui);
+                min-height: 100vh;
+                padding: 32px 24px 64px;
+            }
+            .wrap {
+                max-width: 1180px;
+                margin: 0 auto;
+            }
+
+            header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                margin-bottom: 28px;
+                flex-wrap: wrap;
+                gap: 16px;
+                border-bottom: 1px solid var(--line);
+                padding-bottom: 22px;
+            }
+            .brand-eyebrow {
+                font-size: 12px;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: var(--teal);
+                margin-bottom: 8px;
+                font-weight: 600;
+            }
+            h1 {
+                font-family: var(--font-display);
+                font-weight: 600;
+                font-size: 40px;
+                letter-spacing: -0.01em;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+            }
+            .signal-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: var(--gold);
+                box-shadow: 0 0 0 4px rgba(227, 162, 60, 0.18);
+                animation: pulse 2.2s ease-in-out infinite;
+            }
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+                50% {
+                    transform: scale(1.4);
+                    opacity: 0.6;
+                }
+            }
+            .status {
+                font-size: 13px;
+                color: var(--muted);
+                text-align: right;
+            }
+            .status b {
+                color: var(--paper);
+                font-weight: 600;
+            }
+            .dot-state {
+                display: inline-block;
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: var(--danger);
+                margin-right: 6px;
+            }
+            .dot-state.on {
+                background: var(--teal);
+            }
+
+            nav.tabs {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 24px;
+            }
+            nav.tabs button {
+                font-family: var(--font-ui);
+                font-size: 13px;
+                font-weight: 600;
+                background: transparent;
+                color: var(--muted);
+                border: 1px solid var(--line);
+                padding: 10px 18px;
+                border-radius: 100px;
+                cursor: pointer;
+                letter-spacing: 0.02em;
+                transition: all 0.15s ease;
+            }
+            nav.tabs button.active {
+                background: var(--gold);
+                color: var(--ink);
+                border-color: var(--gold);
+            }
+            nav.tabs button:not(.active):hover {
+                border-color: var(--teal);
+                color: var(--paper);
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: 1.3fr 1fr;
+                gap: 20px;
+            }
+            @media (max-width: 880px) {
+                .grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            .panel {
+                background: var(--surface);
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                padding: 20px;
+            }
+            .panel h2 {
+                font-family: var(--font-display);
+                font-size: 19px;
+                font-weight: 600;
+                margin-bottom: 14px;
+                color: var(--paper);
+            }
+
+            .video-box {
+                position: relative;
+                border-radius: 10px;
+                overflow: hidden;
+                background: #000;
+                aspect-ratio: 4/3;
+            }
+            video,
+            canvas {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            video {
+                transform: scaleX(-1);
+            }
+            canvas {
+                transform: scaleX(-1);
+            }
+
+            .controls {
+                display: flex;
+                gap: 10px;
+                margin-top: 14px;
+                flex-wrap: wrap;
+            }
+            button.action {
+                font-family: var(--font-ui);
+                font-weight: 600;
+                font-size: 13px;
+                background: var(--teal);
+                color: var(--ink);
+                border: none;
+                padding: 11px 20px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition:
+                    transform 0.12s ease,
+                    opacity 0.12s ease;
+            }
+            button.action:hover {
+                transform: translateY(-1px);
+            }
+            button.action.secondary {
+                background: transparent;
+                color: var(--paper);
+                border: 1px solid var(--line);
+            }
+            button.action.danger {
+                background: var(--danger);
+                color: var(--ink);
+            }
+            button.action:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            /* --- Live translate panel --- */
+            .prediction-hero {
+                text-align: center;
+                padding: 26px 10px 18px;
+                border-bottom: 1px solid var(--line);
+                margin-bottom: 16px;
+            }
+            .prediction-label {
+                font-family: var(--font-display);
+                font-size: 56px;
+                font-weight: 600;
+                color: var(--gold);
+                line-height: 1;
+                min-height: 64px;
+            }
+            .prediction-sub {
+                color: var(--muted);
+                font-size: 12px;
+                margin-top: 8px;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+
+            .constellation {
+                display: flex;
+                gap: 6px;
+                justify-content: center;
+                margin-top: 18px;
+            }
+            .constellation .node {
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                background: var(--line);
+                transition:
+                    background 0.2s ease,
+                    transform 0.2s ease;
+            }
+            .constellation .node.lit {
+                background: var(--teal);
+                transform: scale(1.15);
+            }
+
+            .history {
+                list-style: none;
+                max-height: 220px;
+                overflow-y: auto;
+                margin-top: 14px;
+            }
+            .history li {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid var(--line);
+                font-size: 13px;
+                color: var(--muted);
+            }
+            .history li b {
+                color: var(--paper);
+                font-family: var(--font-display);
+                font-size: 15px;
+            }
+            .history li span.conf {
+                color: var(--teal);
+                font-variant-numeric: tabular-nums;
+            }
+            .history:empty::after {
+                content: 'En attente de la première prédiction…';
+                color: var(--muted);
+                font-size: 13px;
+                display: block;
+                padding: 12px 0;
+            }
+
+            /* --- Collect panel --- */
+            .chip-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+            .chip {
+                font-family: var(--font-ui);
+                font-size: 13px;
+                font-weight: 600;
+                padding: 8px 14px;
+                border-radius: 8px;
+                border: 1px solid var(--line);
+                background: var(--surface-2);
+                color: var(--paper);
+                cursor: pointer;
+            }
+            .chip.selected {
+                background: var(--gold);
+                color: var(--ink);
+                border-color: var(--gold);
+            }
+            .counter {
+                font-family: var(--font-display);
+                font-size: 32px;
+                color: var(--paper);
+                margin: 10px 0;
+            }
+            .counter span {
+                color: var(--teal);
+            }
+            .hint {
+                color: var(--muted);
+                font-size: 13px;
+                line-height: 1.5;
+                margin-bottom: 14px;
+            }
+
+            footer {
+                margin-top: 36px;
+                text-align: center;
+                color: var(--muted);
+                font-size: 12px;
+            }
+            code {
+                background: var(--surface-2);
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 12px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <header>
+                <div>
+                    <div class="brand-eyebrow">
+                        Landmarks → Modèle → Dashboard
+                    </div>
+                    <h1><span class="signal-dot"></span> ASL Live</h1>
+                </div>
+                <div class="status">
+                    <div>
+                        <span class="dot-state" id="wsDot"></span>Backend :
+                        <b id="wsState">déconnecté</b>
+                    </div>
+                    <div style="margin-top: 4px">
+                        Main détectée : <b id="handState">non</b>
+                    </div>
+                    <div style="margin-top: 4px">
+                        MediaPipe : <b id="mpState">chargement…</b>
+                    </div>
+                </div>
+            </header>
+
+            <nav class="tabs">
+                <button class="active" data-tab="collect">
+                    1 · Collecter des données
+                </button>
+                <button data-tab="live">2 · Traduire en direct</button>
+            </nav>
+
+            <!-- ===================== COLLECT TAB ===================== -->
+            <section id="tab-collect" class="grid">
+                <div class="panel">
+                    <h2>Webcam</h2>
+                    <div class="video-box">
+                        <video
+                            id="videoCollect"
+                            autoplay
+                            playsinline
+                            muted></video>
+                        <canvas id="canvasCollect"></canvas>
+                    </div>
+                    <div class="controls">
+                        <button class="action" id="btnRecord">
+                            ● Enregistrer 60 frames
+                        </button>
+                        <button class="action secondary" id="btnExport">
+                            Exporter le dataset (CSV)
+                        </button>
+                        <button class="action danger" id="btnClear">
+                            Vider
+                        </button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h2>Étiquette du signe</h2>
+                    <p class="hint">
+                        Choisis une étiquette, positionne ta main devant la
+                        caméra, puis clique sur « Enregistrer ». Répète pour
+                        chaque lettre / mot, avec plusieurs prises et angles
+                        différents.
+                    </p>
+                    <div class="chip-grid" id="labelGrid"></div>
+                    <div class="counter">
+                        Échantillons pour <span id="currentLabel">A</span> :
+                        <span id="labelCount">0</span>
+                    </div>
+                    <div
+                        class="counter"
+                        style="font-size: 16px; color: var(--muted)">
+                        Total dataset :
+                        <span
+                            id="totalCount"
+                            style="
+                                color: var(--teal);
+                                font-family: var(--font-ui);
+                                font-weight: 600;
+                            "
+                            >0</span
+                        >
+                        lignes
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===================== LIVE TAB ===================== -->
+            <section id="tab-live" class="grid" style="display: none">
+                <div class="panel">
+                    <h2>Webcam</h2>
+                    <div class="video-box">
+                        <video
+                            id="videoLive"
+                            autoplay
+                            playsinline
+                            muted></video>
+                        <canvas id="canvasLive"></canvas>
+                    </div>
+                    <div class="controls">
+                        <button class="action secondary" id="btnConnect">
+                            Se connecter au backend
+                        </button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h2>Traduction en direct</h2>
+                    <div class="prediction-hero">
+                        <div class="prediction-label" id="predLabel">—</div>
+                        <div class="prediction-sub" id="predConf">
+                            confiance —
+                        </div>
+                        <div class="constellation" id="constellation"></div>
+                    </div>
+                    <h2 style="font-size: 14px">Historique</h2>
+                    <ul class="history" id="history"></ul>
+                </div>
+            </section>
+
+            <footer>
+                <!-- Backend attendu sur <code>ws://localhost:8000/ws</code> — voir <code>README.md</code> pour lancer le serveur et entraîner le modèle. -->
+                Backend attendu sur <code>ws://{URL}/ws</code>
+            </footer>
+        </div>
+
+        <script type="module">
+            import {
+                HandLandmarker,
+                FilesetResolver,
+            } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+
+            const LABELS = [
+                'A',
+                'B',
+                'C',
+                'D',
+                'E',
+                'F',
+                'G',
+                'H',
+                'I',
+                'J',
+                'K',
+                'L',
+                'M',
+                'N',
+                'O',
+                'P',
+                'Q',
+                'R',
+                'S',
+                'T',
+                'U',
+                'V',
+                'W',
+                'X',
+                'Y',
+                'Z',
+                'hello',
+                'thanks',
+                'yes',
+                'no',
+                'please',
+            ];
+            let currentLabel = 'A';
+            let dataset = []; // {label, landmarks:[x,y,z * 21]}
+            let lastLandmarks = null;
+            let recording = false;
+            let recordTarget = 0;
+
+            /* ---------- Tabs ---------- */
+            document.querySelectorAll('nav.tabs button').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    document
+                        .querySelectorAll('nav.tabs button')
+                        .forEach((b) => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('tab-collect').style.display =
+                        btn.dataset.tab === 'collect' ? 'grid' : 'none';
+                    document.getElementById('tab-live').style.display =
+                        btn.dataset.tab === 'live' ? 'grid' : 'none';
+                });
+            });
+
+            /* ---------- Label chips ---------- */
+            const labelGrid = document.getElementById('labelGrid');
+            LABELS.forEach((l) => {
+                const c = document.createElement('div');
+                c.className = 'chip' + (l === currentLabel ? ' selected' : '');
+                c.textContent = l;
+                c.addEventListener('click', () => {
+                    currentLabel = l;
+                    document
+                        .querySelectorAll('.chip')
+                        .forEach((x) => x.classList.remove('selected'));
+                    c.classList.add('selected');
+                    document.getElementById('currentLabel').textContent = l;
+                    updateCounts();
+                });
+                labelGrid.appendChild(c);
+            });
+
+            function updateCounts() {
+                document.getElementById('labelCount').textContent =
+                    dataset.filter((d) => d.label === currentLabel).length;
+                document.getElementById('totalCount').textContent =
+                    dataset.length;
+            }
+
+            /* ---------- Constellation (confidence meter, 10 nodes) ---------- */
+            const constellationEl = document.getElementById('constellation');
+            for (let i = 0; i < 10; i++) {
+                const n = document.createElement('div');
+                n.className = 'node';
+                constellationEl.appendChild(n);
+            }
+            function setConfidenceMeter(conf) {
+                const nodes = constellationEl.querySelectorAll('.node');
+                const lit = Math.round(conf * 10);
+                nodes.forEach((n, i) => n.classList.toggle('lit', i < lit));
+            }
+
+            /* ---------- MediaPipe Hands setup (shared logic for both tabs) ---------- */
+            /* ---------- MediaPipe Hands setup (Tasks Vision API — une instance par flux vidéo) ---------- */
+            async function setupHands(videoEl, canvasEl, onResults) {
+                const ctx = canvasEl.getContext('2d');
+
+                try {
+                    const vision = await FilesetResolver.forVisionTasks(
+                        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm',
+                    );
+                    const landmarker = await HandLandmarker.createFromOptions(
+                        vision,
+                        {
+                            baseOptions: {
+                                modelAssetPath:
+                                    'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+                                delegate: 'GPU',
+                            },
+                            runningMode: 'VIDEO',
+                            numHands: 1,
+                        },
+                    );
+
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 640, height: 480 },
+                    });
+                    videoEl.srcObject = stream;
+                    await new Promise((resolve) => {
+                        videoEl.onloadedmetadata = () => {
+                            videoEl.play();
+                            resolve();
+                        };
+                    });
+
+                    document.getElementById('mpState').textContent = 'prêt';
+
+                    function loop() {
+                        canvasEl.width = videoEl.videoWidth || 640;
+                        canvasEl.height = videoEl.videoHeight || 480;
+                        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+                        const results = landmarker.detectForVideo(
+                            videoEl,
+                            performance.now(),
+                        );
+                        if (results.landmarks && results.landmarks.length > 0) {
+                            const lm = results.landmarks[0];
+                            drawSkeleton(
+                                ctx,
+                                lm,
+                                canvasEl.width,
+                                canvasEl.height,
+                            );
+                            lastLandmarks = lm.flatMap((p) => [p.x, p.y, p.z]);
+                            document.getElementById('handState').textContent =
+                                'oui';
+                            if (onResults) onResults(lastLandmarks);
+                        } else {
+                            lastLandmarks = null;
+                            document.getElementById('handState').textContent =
+                                'non';
+                        }
+                        requestAnimationFrame(loop);
+                    }
+                    loop();
+                } catch (e) {
+                    console.error('Erreur MediaPipe:', e);
+                    document.getElementById('mpState').textContent =
+                        'erreur : ' + e.message;
+                }
+            }
+
+            const HAND_CONNECTIONS = [
+                [0, 1],
+                [1, 2],
+                [2, 3],
+                [3, 4],
+                [0, 5],
+                [5, 6],
+                [6, 7],
+                [7, 8],
+                [5, 9],
+                [9, 10],
+                [10, 11],
+                [11, 12],
+                [9, 13],
+                [13, 14],
+                [14, 15],
+                [15, 16],
+                [13, 17],
+                [17, 18],
+                [18, 19],
+                [19, 20],
+                [0, 17],
+            ];
+            function drawSkeleton(ctx, lm, w, h) {
+                ctx.strokeStyle = '#4FD1AE';
+                ctx.lineWidth = 2;
+                HAND_CONNECTIONS.forEach(([a, b]) => {
+                    ctx.beginPath();
+                    ctx.moveTo(lm[a].x * w, lm[a].y * h);
+                    ctx.lineTo(lm[b].x * w, lm[b].y * h);
+                    ctx.stroke();
+                });
+                ctx.fillStyle = '#E3A23C';
+                lm.forEach((p) => {
+                    ctx.beginPath();
+                    ctx.arc(p.x * w, p.y * h, 3, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+            }
+
+            /* ---------- Collect tab ---------- */
+            setupHands(
+                document.getElementById('videoCollect'),
+                document.getElementById('canvasCollect'),
+            );
+
+            document
+                .getElementById('btnRecord')
+                .addEventListener('click', () => {
+                    recordTarget = dataset.length + 60;
+                    recording = true;
+                    document.getElementById('btnRecord').disabled = true;
+                    const iv = setInterval(() => {
+                        if (lastLandmarks) {
+                            dataset.push({
+                                label: currentLabel,
+                                landmarks: [...lastLandmarks],
+                            });
+                            updateCounts();
+                        }
+                        if (dataset.length >= recordTarget) {
+                            clearInterval(iv);
+                            recording = false;
+                            document.getElementById('btnRecord').disabled =
+                                false;
+                        }
+                    }, 60);
+                });
+
+            document
+                .getElementById('btnClear')
+                .addEventListener('click', () => {
+                    if (confirm('Vider tout le dataset collecté ?')) {
+                        dataset = [];
+                        updateCounts();
+                    }
+                });
+
+            document
+                .getElementById('btnExport')
+                .addEventListener('click', () => {
+                    if (dataset.length === 0) {
+                        alert('Aucune donnée à exporter.');
+                        return;
+                    }
+                    const header = [
+                        'label',
+                        ...Array.from({ length: 21 }, (_, i) => [
+                            `x${i}`,
+                            `y${i}`,
+                            `z${i}`,
+                        ]).flat(),
+                    ].join(',');
+                    const rows = dataset.map((d) =>
+                        [d.label, ...d.landmarks].join(','),
+                    );
+                    const csv = [header, ...rows].join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'landmarks_dataset.csv';
+                    a.click();
+                });
+
+            /* ---------- Live tab ---------- */
+            let ws = null;
+            let lastSend = 0;
+
+            function connectWS() {
+                ws = new WebSocket('ws://localhost:8000/ws');
+                ws.onopen = () => {
+                    document.getElementById('wsState').textContent = 'connecté';
+                    document.getElementById('wsDot').classList.add('on');
+                };
+                ws.onclose = () => {
+                    document.getElementById('wsState').textContent =
+                        'déconnecté';
+                    document.getElementById('wsDot').classList.remove('on');
+                };
+                ws.onerror = () => {
+                    document.getElementById('wsState').textContent = 'erreur';
+                };
+                ws.onmessage = (evt) => {
+                    const data = JSON.parse(evt.data);
+                    if (data.error) {
+                        document.getElementById('predLabel').textContent = '⚠';
+                        document.getElementById('predConf').textContent =
+                            data.error;
+                        return;
+                    }
+                    document.getElementById('predLabel').textContent =
+                        data.label;
+                    document.getElementById('predConf').textContent =
+                        `confiance ${(data.confidence * 100).toFixed(0)}%`;
+                    setConfidenceMeter(data.confidence);
+                    const li = document.createElement('li');
+                    li.innerHTML = `<b>${data.label}</b><span class="conf">${(data.confidence * 100).toFixed(0)}%</span>`;
+                    const hist = document.getElementById('history');
+                    hist.prepend(li);
+                    while (hist.children.length > 25)
+                        hist.removeChild(hist.lastChild);
+                };
+            }
+            document
+                .getElementById('btnConnect')
+                .addEventListener('click', connectWS);
+
+            setupHands(
+                document.getElementById('videoLive'),
+                document.getElementById('canvasLive'),
+                (landmarks) => {
+                    const now = Date.now();
+                    if (ws && ws.readyState === 1 && now - lastSend > 150) {
+                        // ~6-7 fps d'inférence
+                        lastSend = now;
+                        ws.send(JSON.stringify({ landmarks }));
+                    }
+                },
+            );
+        </script>
+    </body>
+</html>
