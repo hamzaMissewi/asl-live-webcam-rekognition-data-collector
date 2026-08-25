@@ -1,0 +1,9 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+.vscode
+.idea
+railway.json
+render.yaml
+README.md

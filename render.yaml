@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: asl-translator
+    runtime: docker
+    dockerfilePath: Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
