@@ -3,7 +3,8 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>ASL Live — Traducteur de langue des signes</title>
+        <!-- <title>ASL Live — Traducteur de langue des signes</title> -->
+        <title>Gestures & Face Expressions Detection & Signs Translation</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
             href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
@@ -11,7 +12,8 @@
 
         <style>
             :root {
-                --ink: #0e1717;
+                /* --ink: #0e1717; */
+                --ink: #2b2b2b;
                 --surface: #16211f;
                 --surface-2: #1c2926;
                 --paper: #efe9de;
@@ -346,16 +348,79 @@
                 border-radius: 4px;
                 font-size: 12px;
             }
+
+            /* --- Expression / Gesture panels --- */
+            .expression-hero {
+                text-align: center;
+                padding: 26px 10px 18px;
+                border-bottom: 1px solid var(--line);
+                margin-bottom: 16px;
+            }
+            .expression-emoji {
+                font-size: 64px;
+                line-height: 1;
+                min-height: 72px;
+            }
+            .expression-label {
+                font-family: var(--font-display);
+                font-size: 28px;
+                font-weight: 600;
+                color: var(--gold);
+                margin-top: 8px;
+            }
+            .gesture-hero {
+                text-align: center;
+                padding: 26px 10px 18px;
+                border-bottom: 1px solid var(--line);
+                margin-bottom: 16px;
+            }
+            .gesture-emoji {
+                font-size: 64px;
+                line-height: 1;
+                min-height: 72px;
+            }
+            .gesture-label {
+                font-family: var(--font-display);
+                font-size: 28px;
+                font-weight: 600;
+                color: var(--gold);
+                margin-top: 8px;
+            }
+            .gesture-movement {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                margin-top: 14px;
+            }
+            .movement-arrow {
+                font-size: 28px;
+                color: var(--teal);
+                transition: transform 0.15s ease;
+            }
+            .movement-arrow.active {
+                transform: scale(1.3);
+                color: var(--gold);
+            }
+            .movement-label {
+                font-size: 13px;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
         </style>
     </head>
     <body>
         <div class="wrap">
             <header>
                 <div>
-                    <div class="brand-eyebrow">
+                    <!-- <div class="brand-eyebrow">
                         Landmarks → Modèle → Dashboard
-                    </div>
-                    <h1><span class="signal-dot"></span> ASL Live</h1>
+                    </div> -->
+                    <h1>
+                        <span class="signal-dot"></span> Hamza Gestures
+                        Translator
+                    </h1>
                 </div>
                 <div class="status">
                     <div>
@@ -376,6 +441,8 @@
                     1 · Collecter des données
                 </button>
                 <button data-tab="live">2 · Traduire en direct</button>
+                <button data-tab="face">3 · Expression du visage</button>
+                <button data-tab="gesture">4 · Gestes de la main</button>
             </nav>
 
             <!-- ===================== COLLECT TAB ===================== -->
@@ -465,6 +532,97 @@
                 </div>
             </section>
 
+            <!-- ===================== FACE EXPRESSION TAB ===================== -->
+            <section id="tab-face" class="grid" style="display: none">
+                <div class="panel">
+                    <h2>Webcam — Visage</h2>
+                    <div class="video-box">
+                        <video
+                            id="videoFace"
+                            autoplay
+                            playsinline
+                            muted></video>
+                        <canvas id="canvasFace"></canvas>
+                    </div>
+                    <div
+                        class="status"
+                        style="margin-top: 10px; text-align: left">
+                        <div>
+                            <span class="dot-state" id="faceWsDot"></span
+                            >Backend :
+                            <b id="faceWsState">déconnecté</b>
+                        </div>
+                        <div style="margin-top: 4px">
+                            Visage détecté : <b id="faceDetected">non</b>
+                        </div>
+                        <div style="margin-top: 4px">
+                            MediaPipe : <b id="faceMpState">chargement…</b>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button class="action secondary" id="btnConnectFace">
+                            Se connecter au backend
+                        </button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h2>Expression détectée</h2>
+                    <div class="expression-hero">
+                        <div class="expression-emoji" id="faceEmoji">😐</div>
+                        <div class="expression-label" id="faceExpr">—</div>
+                        <div class="constellation" id="faceConstellation"></div>
+                    </div>
+                    <h2 style="font-size: 14px">Historique</h2>
+                    <ul class="history" id="faceHistory"></ul>
+                </div>
+            </section>
+
+            <!-- ===================== HAND GESTURE TAB ===================== -->
+            <section id="tab-gesture" class="grid" style="display: none">
+                <div class="panel">
+                    <h2>Webcam — Main</h2>
+                    <div class="video-box">
+                        <video
+                            id="videoGesture"
+                            autoplay
+                            playsinline
+                            muted></video>
+                        <canvas id="canvasGesture"></canvas>
+                    </div>
+                    <div class="status" style="margin-top: 10px; text-align: left">
+                        <div>
+                            <span class="dot-state" id="gestureWsDot"></span>Backend :
+                            <b id="gestureWsState">déconnecté</b>
+                        </div>
+                        <div style="margin-top: 4px">
+                            Main détectée : <b id="gestureHandState">non</b>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button class="action secondary" id="btnConnectGesture">
+                            Se connecter au backend
+                        </button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h2>Geste détecté</h2>
+                    <div class="gesture-hero">
+                        <div class="gesture-emoji" id="gestureEmoji">🖐️</div>
+                        <div class="gesture-label" id="gestureLabel">—</div>
+                        <div class="gesture-movement" id="gestureMovement">
+                            <span class="movement-arrow" id="arrowUp">↑</span>
+                            <span class="movement-arrow" id="arrowDown">↓</span>
+                            <span class="movement-arrow" id="arrowLeft">←</span>
+                            <span class="movement-arrow" id="arrowRight">→</span>
+                            <span class="movement-label" id="movementText">statique</span>
+                        </div>
+                        <div class="constellation" id="gestureConstellation"></div>
+                    </div>
+                    <h2 style="font-size: 14px">Historique</h2>
+                    <ul class="history" id="gestureHistory"></ul>
+                </div>
+            </section>
+
             <footer>
                 <!-- Backend attendu sur <code>ws://localhost:8000/ws</code> — voir <code>README.md</code> pour lancer le serveur et entraîner le modèle. -->
                 Backend attendu sur <code>ws://{URL}/ws</code>
@@ -474,6 +632,7 @@
         <script type="module">
             import {
                 HandLandmarker,
+                FaceLandmarker,
                 FilesetResolver,
             } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 
@@ -516,6 +675,82 @@
             let recording = false;
             let recordTarget = 0;
 
+            const ALL_TABS = ['collect', 'live', 'face', 'gesture'];
+            const tabReady = {
+                collect: false,
+                live: false,
+                face: false,
+                gesture: false,
+            };
+
+            function initCollectTab() {
+                if (tabReady.collect) return;
+                tabReady.collect = true;
+                setupHands(
+                    document.getElementById('videoCollect'),
+                    document.getElementById('canvasCollect'),
+                );
+            }
+
+            function initLiveTab() {
+                if (tabReady.live) return;
+                tabReady.live = true;
+                setupHands(
+                    document.getElementById('videoLive'),
+                    document.getElementById('canvasLive'),
+                    (landmarks) => {
+                        const now = Date.now();
+                        if (ws && ws.readyState === 1 && now - lastSend > 150) {
+                            lastSend = now;
+                            ws.send(JSON.stringify({ landmarks }));
+                        }
+                    },
+                );
+                connectWS();
+            }
+
+            function initFaceTab() {
+                if (tabReady.face) return;
+                tabReady.face = true;
+                setupFace(
+                    document.getElementById('videoFace'),
+                    document.getElementById('canvasFace'),
+                    (landmarks) => {
+                        const now = Date.now();
+                        if (
+                            wsFace &&
+                            wsFace.readyState === 1 &&
+                            now - lastFaceSend > 200
+                        ) {
+                            lastFaceSend = now;
+                            wsFace.send(JSON.stringify({ landmarks }));
+                        }
+                    },
+                );
+                connectWSFace();
+            }
+
+            function initGestureTab() {
+                if (tabReady.gesture) return;
+                tabReady.gesture = true;
+                setupHands(
+                    document.getElementById('videoGesture'),
+                    document.getElementById('canvasGesture'),
+                    (landmarks) => {
+                        const now = Date.now();
+                        if (
+                            wsGesture &&
+                            wsGesture.readyState === 1 &&
+                            now - lastGestureSend > 150
+                        ) {
+                            lastGestureSend = now;
+                            wsGesture.send(JSON.stringify({ landmarks }));
+                        }
+                    },
+                );
+                connectWSGesture();
+            }
+
             /* ---------- Tabs ---------- */
             document.querySelectorAll('nav.tabs button').forEach((btn) => {
                 btn.addEventListener('click', () => {
@@ -523,10 +758,19 @@
                         .querySelectorAll('nav.tabs button')
                         .forEach((b) => b.classList.remove('active'));
                     btn.classList.add('active');
-                    document.getElementById('tab-collect').style.display =
-                        btn.dataset.tab === 'collect' ? 'grid' : 'none';
-                    document.getElementById('tab-live').style.display =
-                        btn.dataset.tab === 'live' ? 'grid' : 'none';
+
+                    ALL_TABS.forEach((t) => {
+                        const el = document.getElementById('tab-' + t);
+                        if (el)
+                            el.style.display =
+                                t === btn.dataset.tab ? 'grid' : 'none';
+                    });
+
+                    const tab = btn.dataset.tab;
+                    if (tab === 'collect') initCollectTab();
+                    else if (tab === 'live') initLiveTab();
+                    else if (tab === 'face') initFaceTab();
+                    else if (tab === 'gesture') initGestureTab();
                 });
             });
 
@@ -566,6 +810,22 @@
                 const nodes = constellationEl.querySelectorAll('.node');
                 const lit = Math.round(conf * 10);
                 nodes.forEach((n, i) => n.classList.toggle('lit', i < lit));
+            }
+
+            const faceConstellationEl =
+                document.getElementById('faceConstellation');
+            for (let i = 0; i < 10; i++) {
+                const n = document.createElement('div');
+                n.className = 'node';
+                faceConstellationEl.appendChild(n);
+            }
+            const gestureConstellationEl = document.getElementById(
+                'gestureConstellation',
+            );
+            for (let i = 0; i < 10; i++) {
+                const n = document.createElement('div');
+                n.className = 'node';
+                gestureConstellationEl.appendChild(n);
             }
 
             /* ---------- MediaPipe Hands setup (shared logic for both tabs) ---------- */
@@ -680,10 +940,6 @@
             }
 
             /* ---------- Collect tab ---------- */
-            setupHands(
-                document.getElementById('videoCollect'),
-                document.getElementById('canvasCollect'),
-            );
 
             document
                 .getElementById('btnRecord')
@@ -747,16 +1003,37 @@
             let ws = null;
             let lastSend = 0;
 
+            let wsReconnecting = false;
+            let reconnectAttempts = 0;
+
             function connectWS() {
+                if (ws && ws.readyState <= 1) return;
+                wsReconnecting = true;
+                document.getElementById('wsState').textContent = 'reconnexion…';
                 ws = new WebSocket('ws://localhost:8000/ws');
                 ws.onopen = () => {
+                    reconnectAttempts = 0;
                     document.getElementById('wsState').textContent = 'connecté';
                     document.getElementById('wsDot').classList.add('on');
+                    document.getElementById('btnConnect').textContent =
+                        'Se déconnecter';
                 };
                 ws.onclose = () => {
                     document.getElementById('wsState').textContent =
                         'déconnecté';
                     document.getElementById('wsDot').classList.remove('on');
+                    document.getElementById('btnConnect').textContent =
+                        'Se connecter au backend';
+                    if (wsReconnecting) {
+                        const delay = Math.min(
+                            1000 * Math.pow(2, reconnectAttempts),
+                            8000,
+                        );
+                        reconnectAttempts++;
+                        document.getElementById('wsState').textContent =
+                            'reconnexion…';
+                        setTimeout(connectWS, delay);
+                    }
                 };
                 ws.onerror = () => {
                     document.getElementById('wsState').textContent = 'erreur';
@@ -784,20 +1061,366 @@
             }
             document
                 .getElementById('btnConnect')
-                .addEventListener('click', connectWS);
-
-            setupHands(
-                document.getElementById('videoLive'),
-                document.getElementById('canvasLive'),
-                (landmarks) => {
-                    const now = Date.now();
-                    if (ws && ws.readyState === 1 && now - lastSend > 150) {
-                        // ~6-7 fps d'inférence
-                        lastSend = now;
-                        ws.send(JSON.stringify({ landmarks }));
+                .addEventListener('click', () => {
+                    if (ws && ws.readyState <= 1) {
+                        wsReconnecting = false;
+                        ws.close();
+                        document.getElementById('btnConnect').textContent =
+                            'Se connecter au backend';
+                    } else {
+                        connectWS();
+                        document.getElementById('btnConnect').textContent =
+                            'Se déconnecter';
                     }
-                },
-            );
+                });
+
+            /* ================================================================
+               FACE EXPRESSION TAB
+               ================================================================ */
+            let wsFace = null;
+            let wsFaceReconnecting = false;
+            let faceReconnectAttempts = 0;
+            let lastFaceSend = 0;
+
+            function connectWSFace() {
+                if (wsFace && wsFace.readyState <= 1) return;
+                wsFaceReconnecting = true;
+                document.getElementById('faceWsState').textContent =
+                    'reconnexion…';
+                wsFace = new WebSocket('ws://localhost:8000/ws-face');
+                wsFace.onopen = () => {
+                    faceReconnectAttempts = 0;
+                    document.getElementById('faceWsState').textContent =
+                        'connecté';
+                    document.getElementById('faceWsDot').classList.add('on');
+                    document.getElementById('btnConnectFace').textContent =
+                        'Se déconnecter';
+                };
+                wsFace.onclose = () => {
+                    document.getElementById('faceWsState').textContent =
+                        'déconnecté';
+                    document.getElementById('faceWsDot').classList.remove('on');
+                    document.getElementById('btnConnectFace').textContent =
+                        'Se connecter au backend';
+                    if (wsFaceReconnecting) {
+                        const delay = Math.min(
+                            1000 * Math.pow(2, faceReconnectAttempts),
+                            8000,
+                        );
+                        faceReconnectAttempts++;
+                        setTimeout(connectWSFace, delay);
+                    }
+                };
+                wsFace.onerror = () => {
+                    document.getElementById('faceWsState').textContent =
+                        'erreur';
+                };
+                wsFace.onmessage = (evt) => {
+                    const data = JSON.parse(evt.data);
+                    if (data.error) return;
+                    document.getElementById('faceEmoji').textContent =
+                        data.emoji;
+                    document.getElementById('faceExpr').textContent =
+                        data.expression;
+                    const nodes = faceConstellationEl.querySelectorAll('.node');
+                    const lit = Math.round(data.confidence * 10);
+                    nodes.forEach((n, i) => n.classList.toggle('lit', i < lit));
+                    const li = document.createElement('li');
+                    li.innerHTML = `<b>${data.emoji} ${data.expression}</b><span class="conf">${(data.confidence * 100).toFixed(0)}%</span>`;
+                    const hist = document.getElementById('faceHistory');
+                    hist.prepend(li);
+                    while (hist.children.length > 25)
+                        hist.removeChild(hist.lastChild);
+                };
+            }
+
+            document
+                .getElementById('btnConnectFace')
+                .addEventListener('click', () => {
+                    if (wsFace && wsFace.readyState <= 1) {
+                        wsFaceReconnecting = false;
+                        wsFace.close();
+                        document.getElementById('btnConnectFace').textContent =
+                            'Se connecter au backend';
+                    } else {
+                        connectWSFace();
+                    }
+                });
+
+            async function setupFace(videoEl, canvasEl, onResults) {
+                const ctx = canvasEl.getContext('2d');
+                const faceMpEl = document.getElementById('faceMpState');
+                const faceDetEl = document.getElementById('faceDetected');
+                try {
+                    faceMpEl.textContent = 'chargement modèle…';
+                    const vision = await FilesetResolver.forVisionTasks(
+                        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm',
+                    );
+                    faceMpEl.textContent = 'chargement face_landmarker…';
+                    const faceLandmarker =
+                        await FaceLandmarker.createFromOptions(vision, {
+                            baseOptions: {
+                                modelAssetPath:
+                                    'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+                                delegate: 'GPU',
+                            },
+                            runningMode: 'VIDEO',
+                            numFaces: 1,
+                        });
+
+                    faceMpEl.textContent = 'ouverture caméra…';
+                    let stream;
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: { width: 640, height: 480 },
+                        });
+                    } catch (camErr) {
+                        faceMpEl.textContent =
+                            'erreur caméra : ' + camErr.message;
+                        console.error('Camera error:', camErr);
+                        return;
+                    }
+                    videoEl.srcObject = stream;
+                    await new Promise((resolve, reject) => {
+                        videoEl.onloadedmetadata = () => {
+                            videoEl.play().then(resolve).catch(reject);
+                        };
+                        setTimeout(() => reject(new Error('timeout')), 10000);
+                    });
+
+                    faceMpEl.textContent = 'prêt';
+
+                    function loop() {
+                        canvasEl.width = videoEl.videoWidth || 640;
+                        canvasEl.height = videoEl.videoHeight || 480;
+                        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+                        const results = faceLandmarker.detectForVideo(
+                            videoEl,
+                            performance.now(),
+                        );
+                        if (
+                            results.faceLandmarks &&
+                            results.faceLandmarks.length > 0
+                        ) {
+                            const lm = results.faceLandmarks[0];
+                            drawFaceMesh(
+                                ctx,
+                                lm,
+                                canvasEl.width,
+                                canvasEl.height,
+                            );
+                            faceDetEl.textContent = 'oui';
+                            const flat = lm.flatMap((p) => [p.x, p.y, p.z]);
+                            if (onResults) onResults(flat);
+                        } else {
+                            faceDetEl.textContent = 'non';
+                        }
+                        requestAnimationFrame(loop);
+                    }
+                    loop();
+                } catch (e) {
+                    faceMpEl.textContent = 'erreur : ' + e.message;
+                    console.error('Erreur FaceLandmarker:', e);
+                }
+            }
+
+            const FACE_MESH_TESSELATION = [
+                [127, 34],
+                [34, 139],
+                [139, 127],
+                [11, 0],
+                [0, 37],
+                [37, 11],
+                [232, 231],
+                [231, 120],
+                [120, 232],
+                [72, 37],
+                [37, 39],
+                [39, 72],
+                [128, 121],
+                [121, 47],
+                [47, 128],
+                [232, 121],
+                [121, 128],
+                [128, 232],
+                [104, 69],
+                [69, 67],
+                [67, 104],
+                [175, 171],
+                [171, 148],
+                [148, 175],
+                [118, 50],
+                [50, 101],
+                [101, 118],
+                [73, 39],
+                [39, 40],
+                [40, 73],
+                [9, 151],
+                [151, 108],
+                [108, 9],
+                [48, 115],
+                [115, 131],
+                [131, 48],
+                [194, 204],
+                [204, 211],
+                [211, 194],
+                [74, 40],
+                [40, 185],
+                [185, 74],
+                [80, 42],
+                [42, 183],
+                [183, 80],
+                [40, 92],
+                [92, 186],
+                [186, 40],
+                [230, 229],
+                [229, 119],
+                [119, 230],
+                [202, 212],
+                [212, 214],
+                [214, 202],
+                [83, 18],
+                [18, 17],
+                [17, 83],
+                [76, 61],
+                [61, 146],
+                [146, 76],
+                [160, 29],
+                [29, 30],
+                [30, 160],
+                [56, 157],
+                [157, 173],
+                [173, 56],
+                [106, 204],
+                [204, 194],
+                [194, 106],
+                [135, 214],
+                [214, 192],
+                [192, 135],
+                [203, 165],
+                [165, 98],
+                [98, 203],
+                [21, 71],
+                [71, 68],
+                [68, 21],
+                [51, 45],
+                [45, 4],
+                [4, 51],
+            ];
+
+            function drawFaceMesh(ctx, lm, w, h) {
+                ctx.strokeStyle = 'rgba(79, 209, 174, 0.4)';
+                ctx.lineWidth = 1;
+                FACE_MESH_TESSELATION.forEach(([a, b]) => {
+                    if (lm[a] && lm[b]) {
+                        ctx.beginPath();
+                        ctx.moveTo(lm[a].x * w, lm[a].y * h);
+                        ctx.lineTo(lm[b].x * w, lm[b].y * h);
+                        ctx.stroke();
+                    }
+                });
+                ctx.fillStyle = '#E3A23C';
+                lm.forEach((p) => {
+                    ctx.beginPath();
+                    ctx.arc(p.x * w, p.y * h, 1.5, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+            }
+
+            /* ================================================================
+               HAND GESTURE TAB
+               ================================================================ */
+            let wsGesture = null;
+            let wsGestureReconnecting = false;
+            let gestureReconnectAttempts = 0;
+            let lastGestureSend = 0;
+
+            function connectWSGesture() {
+                if (wsGesture && wsGesture.readyState <= 1) return;
+                wsGestureReconnecting = true;
+                document.getElementById('gestureWsState').textContent = 'reconnexion…';
+                wsGesture = new WebSocket('ws://localhost:8000/ws-gesture');
+                wsGesture.onopen = () => {
+                    gestureReconnectAttempts = 0;
+                    document.getElementById('gestureWsState').textContent = 'connecté';
+                    document.getElementById('gestureWsDot').classList.add('on');
+                    document.getElementById('btnConnectGesture').textContent =
+                        'Se déconnecter';
+                };
+                wsGesture.onclose = () => {
+                    document.getElementById('gestureWsState').textContent =
+                        'déconnecté';
+                    document.getElementById('gestureWsDot').classList.remove('on');
+                    document.getElementById('btnConnectGesture').textContent =
+                        'Se connecter au backend';
+                    if (wsGestureReconnecting) {
+                        const delay = Math.min(
+                            1000 * Math.pow(2, gestureReconnectAttempts),
+                            8000,
+                        );
+                        gestureReconnectAttempts++;
+                        setTimeout(connectWSGesture, delay);
+                    }
+                };
+                wsGesture.onerror = () => {
+                    document.getElementById('gestureWsState').textContent = 'erreur';
+                };
+                wsGesture.onmessage = (evt) => {
+                    const data = JSON.parse(evt.data);
+                    if (data.error) return;
+                    document.getElementById('gestureEmoji').textContent =
+                        data.emoji;
+                    document.getElementById('gestureLabel').textContent =
+                        data.gesture;
+
+                    document
+                        .querySelectorAll('.movement-arrow')
+                        .forEach((a) => a.classList.remove('active'));
+                    const movMap = {
+                        haut: 'arrowUp',
+                        bas: 'arrowDown',
+                        gauche: 'arrowLeft',
+                        droite: 'arrowRight',
+                    };
+                    if (movMap[data.movement]) {
+                        document
+                            .getElementById(movMap[data.movement])
+                            .classList.add('active');
+                    }
+                    document.getElementById('movementText').textContent =
+                        data.movement +
+                        (data.speed > 0 ? ` (${data.speed})` : '');
+
+                    const nodes =
+                        gestureConstellationEl.querySelectorAll('.node');
+                    const lit = Math.round(data.confidence * 10);
+                    nodes.forEach((n, i) => n.classList.toggle('lit', i < lit));
+                    const li = document.createElement('li');
+                    li.innerHTML = `<b>${data.emoji} ${data.gesture}</b><span class="conf">${data.movement}</span>`;
+                    const hist = document.getElementById('gestureHistory');
+                    hist.prepend(li);
+                    while (hist.children.length > 25)
+                        hist.removeChild(hist.lastChild);
+                };
+            }
+
+            document
+                .getElementById('btnConnectGesture')
+                .addEventListener('click', () => {
+                    if (wsGesture && wsGesture.readyState <= 1) {
+                        wsGestureReconnecting = false;
+                        wsGesture.close();
+                        document.getElementById(
+                            'btnConnectGesture',
+                        ).textContent = 'Se connecter au backend';
+                    } else {
+                        connectWSGesture();
+                    }
+                });
+
+            initCollectTab();
+            connectWS();
         </script>
     </body>
 </html>
