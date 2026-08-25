@@ -79,26 +79,34 @@ async def ws_predict(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            raw = await websocket.receive_text()
-            payload = json.loads(raw)
-            landmarks = payload.get("landmarks")
+            try:
+                raw = await websocket.receive_text()
+                payload = json.loads(raw)
+                landmarks = payload.get("landmarks")
 
-            if model is None:
+                if model is None:
+                    await websocket.send_json(
+                        {"error": "Aucun modèle entraîné — lance train_model.py d'abord."}
+                    )
+                    continue
+
+                if not landmarks or len(landmarks) != 63:
+                    await websocket.send_json({"error": "landmarks invalides (attendu: 63 valeurs)."})
+                    continue
+
+                x = np.array(landmarks).reshape(1, -1)
+                proba = model.predict_proba(x)[0]
+                idx = int(np.argmax(proba))
                 await websocket.send_json(
-                    {"error": "Aucun modèle entraîné — lance train_model.py d'abord."}
+                    {"label": labels[idx], "confidence": float(proba[idx])}
                 )
-                continue
-
-            if not landmarks or len(landmarks) != 63:
-                await websocket.send_json({"error": "landmarks invalides (attendu: 63 valeurs)."})
-                continue
-
-            x = np.array(landmarks).reshape(1, -1)
-            proba = model.predict_proba(x)[0]
-            idx = int(np.argmax(proba))
-            await websocket.send_json(
-                {"label": labels[idx], "confidence": float(proba[idx])}
-            )
+            except json.JSONDecodeError:
+                await websocket.send_json({"error": "JSON invalide reçu."})
+            except Exception as e:
+                try:
+                    await websocket.send_json({"error": f"Erreur de traitement: {str(e)}"})
+                except Exception:
+                    break
     except WebSocketDisconnect:
         pass
 
@@ -192,16 +200,24 @@ async def ws_face(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            raw = await websocket.receive_text()
-            payload = json.loads(raw)
-            landmarks = payload.get("landmarks")
+            try:
+                raw = await websocket.receive_text()
+                payload = json.loads(raw)
+                landmarks = payload.get("landmarks")
 
-            if not landmarks or len(landmarks) != 1434:
-                await websocket.send_json({"error": "landmarks visage invalides (attendu: 1434 valeurs)."})
-                continue
+                if not landmarks or len(landmarks) != 1434:
+                    await websocket.send_json({"error": "landmarks visage invalides (attendu: 1434 valeurs)."})
+                    continue
 
-            result = classify_face_expression(landmarks)
-            await websocket.send_json(result)
+                result = classify_face_expression(landmarks)
+                await websocket.send_json(result)
+            except json.JSONDecodeError:
+                await websocket.send_json({"error": "JSON invalide reçu."})
+            except Exception as e:
+                try:
+                    await websocket.send_json({"error": f"Erreur de traitement: {str(e)}"})
+                except Exception:
+                    break
     except WebSocketDisconnect:
         pass
 
@@ -271,20 +287,28 @@ async def ws_gesture(websocket: WebSocket):
     try:
         history = []
         while True:
-            raw = await websocket.receive_text()
-            payload = json.loads(raw)
-            landmarks = payload.get("landmarks")
+            try:
+                raw = await websocket.receive_text()
+                payload = json.loads(raw)
+                landmarks = payload.get("landmarks")
 
-            if not landmarks or len(landmarks) != 63:
-                await websocket.send_json({"error": "landmarks invalides (attendu: 63 valeurs)."})
-                continue
+                if not landmarks or len(landmarks) != 63:
+                    await websocket.send_json({"error": "landmarks invalides (attendu: 63 valeurs)."})
+                    continue
 
-            wrist = landmarks[0:3]
-            history.append(wrist)
-            if len(history) > 10:
-                history = history[-10:]
+                wrist = landmarks[0:3]
+                history.append(wrist)
+                if len(history) > 10:
+                    history = history[-10:]
 
-            result = classify_hand_gesture(landmarks, history)
-            await websocket.send_json(result)
+                result = classify_hand_gesture(landmarks, history)
+                await websocket.send_json(result)
+            except json.JSONDecodeError:
+                await websocket.send_json({"error": "JSON invalide reçu."})
+            except Exception as e:
+                try:
+                    await websocket.send_json({"error": f"Erreur de traitement: {str(e)}"})
+                except Exception:
+                    break
     except WebSocketDisconnect:
         pass

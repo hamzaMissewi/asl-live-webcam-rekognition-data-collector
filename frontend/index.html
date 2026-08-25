@@ -1000,6 +1000,10 @@
                 });
 
             /* ---------- Live tab ---------- */
+            const WS_BASE =
+                location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+                    ? 'ws://localhost:8000'
+                    : `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}`;
             let ws = null;
             let lastSend = 0;
 
@@ -1010,7 +1014,7 @@
                 if (ws && ws.readyState <= 1) return;
                 wsReconnecting = true;
                 document.getElementById('wsState').textContent = 'reconnexion…';
-                ws = new WebSocket('ws://localhost:8000/ws');
+                ws = new WebSocket(`${WS_BASE}/ws`);
                 ws.onopen = () => {
                     reconnectAttempts = 0;
                     document.getElementById('wsState').textContent = 'connecté';
@@ -1087,7 +1091,7 @@
                 wsFaceReconnecting = true;
                 document.getElementById('faceWsState').textContent =
                     'reconnexion…';
-                wsFace = new WebSocket('ws://localhost:8000/ws-face');
+                wsFace = new WebSocket(`${WS_BASE}/ws-face`);
                 wsFace.onopen = () => {
                     faceReconnectAttempts = 0;
                     document.getElementById('faceWsState').textContent =
@@ -1134,12 +1138,15 @@
                 };
             }
 
-            document
+                document
                 .getElementById('btnConnectFace')
                 .addEventListener('click', () => {
                     if (wsFace && wsFace.readyState <= 1) {
                         wsFaceReconnecting = false;
                         wsFace.close();
+                        document.getElementById('faceWsState').textContent =
+                            'déconnecté';
+                        document.getElementById('faceWsDot').classList.remove('on');
                         document.getElementById('btnConnectFace').textContent =
                             'Se connecter au backend';
                     } else {
@@ -1340,7 +1347,7 @@
                 if (wsGesture && wsGesture.readyState <= 1) return;
                 wsGestureReconnecting = true;
                 document.getElementById('gestureWsState').textContent = 'reconnexion…';
-                wsGesture = new WebSocket('ws://localhost:8000/ws-gesture');
+                wsGesture = new WebSocket(`${WS_BASE}/ws-gesture`);
                 wsGesture.onopen = () => {
                     gestureReconnectAttempts = 0;
                     document.getElementById('gestureWsState').textContent = 'connecté';
@@ -1369,6 +1376,7 @@
                 wsGesture.onmessage = (evt) => {
                     const data = JSON.parse(evt.data);
                     if (data.error) return;
+                    document.getElementById('gestureHandState').textContent = 'oui';
                     document.getElementById('gestureEmoji').textContent =
                         data.emoji;
                     document.getElementById('gestureLabel').textContent =
@@ -1411,9 +1419,11 @@
                     if (wsGesture && wsGesture.readyState <= 1) {
                         wsGestureReconnecting = false;
                         wsGesture.close();
-                        document.getElementById(
-                            'btnConnectGesture',
-                        ).textContent = 'Se connecter au backend';
+                        document.getElementById('gestureWsState').textContent =
+                            'déconnecté';
+                        document.getElementById('gestureWsDot').classList.remove('on');
+                        document.getElementById('btnConnectGesture').textContent =
+                            'Se connecter au backend';
                     } else {
                         connectWSGesture();
                     }
