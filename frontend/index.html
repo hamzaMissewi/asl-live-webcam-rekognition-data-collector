@@ -999,11 +999,14 @@
                     a.click();
                 });
 
-            /* ---------- Live tab ---------- */
-            const WS_BASE =
-                location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-                    ? 'ws://localhost:8000'
-                    : `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}`;
+            /* ---------- Backend URL ---------- */
+            const _envBackend = localStorage.getItem('asl_backend_url');
+            const _paramBackend = new URLSearchParams(location.search).get('backend');
+            const BACKEND_HOST = _paramBackend || _envBackend || location.host;
+            const BACKEND_PROTO = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            const WS_BASE = IS_LOCAL ? 'ws://localhost:8000' : `${BACKEND_PROTO}//${BACKEND_HOST}`;
+            const API_BASE = IS_LOCAL ? 'http://localhost:8000' : `${location.protocol}//${BACKEND_HOST}`;
             let ws = null;
             let lastSend = 0;
 
