@@ -6,6 +6,7 @@ WebSocket), les fait passer dans un modèle entraîné (voir train_model.py),
 et renvoie la prédiction + un score de confiance.
 """
 
+import asyncio
 import json
 from pathlib import Path
 
@@ -77,6 +78,7 @@ def reload_model():
 @app.websocket("/ws")
 async def ws_predict(websocket: WebSocket):
     await websocket.accept()
+    ping_task = asyncio.create_task(ws_ping_keepalive(websocket))
     try:
         while True:
             try:
@@ -109,15 +111,21 @@ async def ws_predict(websocket: WebSocket):
                     break
     except WebSocketDisconnect:
         pass
+    finally:
+        ping_task.cancel()
 
 
-_prev_face_expr = None
-_prev_face_conf = 0.0
+async def ws_ping_keepalive(websocket: WebSocket, interval: float = 15.0):
+    """Send periodic pings to keep the connection alive through proxies (e.g. Render)."""
+    try:
+        while True:
+            await asyncio.sleep(interval)
+            await websocket.send_json({"type": "ping"})
+    except Exception:
+        pass
 
 
-def classify_face_expression(landmarks):
-    global _prev_face_expr, _prev_face_conf
-
+def classify_face_expression(landmarks, prev_expr=None, prev_conf=0.0):
     pts = np.array(landmarks).reshape(478, 3)
 
     MOUTH_LEFT, MOUTH_RIGHT = 61, 291
@@ -183,21 +191,22 @@ def classify_face_expression(landmarks):
     else:
         expr, emoji, conf = "neutral", "😐", 0.8
 
-    if expr == _prev_face_expr:
-        conf = 0.6 * _prev_face_conf + 0.4 * conf
+    if expr == prev_expr:
+        conf = 0.6 * prev_conf + 0.4 * conf
     else:
-        if conf < 0.85 and _prev_face_conf > 0.6:
-            expr = _prev_face_expr
-            conf = _prev_face_conf * 0.8
-    _prev_face_expr = expr
-    _prev_face_conf = conf
+        if conf < 0.85 and prev_conf > 0.6:
+            expr = prev_expr
+            conf = prev_conf * 0.8
 
-    return {"expression": expr, "emoji": emoji, "confidence": round(conf, 2)}
+    return {"expression": expr, "emoji": emoji, "confidence": round(conf, 2)}, expr, conf
 
 
 @app.websocket("/ws-face")
 async def ws_face(websocket: WebSocket):
     await websocket.accept()
+    prev_expr = None
+    prev_conf = 0.0
+    ping_task = asyncio.create_task(ws_ping_keepalive(websocket))
     try:
         while True:
             try:
@@ -209,7 +218,7 @@ async def ws_face(websocket: WebSocket):
                     await websocket.send_json({"error": "landmarks visage invalides (attendu: 1434 valeurs)."})
                     continue
 
-                result = classify_face_expression(landmarks)
+                result, prev_expr, prev_conf = classify_face_expression(landmarks, prev_expr, prev_conf)
                 await websocket.send_json(result)
             except json.JSONDecodeError:
                 await websocket.send_json({"error": "JSON invalide reçu."})
@@ -220,6 +229,8 @@ async def ws_face(websocket: WebSocket):
                     break
     except WebSocketDisconnect:
         pass
+    finally:
+        ping_task.cancel()
 
 
 def classify_hand_gesture(landmarks, history=None):
@@ -269,7 +280,7 @@ def classify_hand_gesture(landmarks, history=None):
                 if abs(dx) > abs(dy):
                     movement = "gauche" if dx > 0 else "droite"
                 else:
-                    movement = "haut" if dy > 0 else "bas"
+                    movement = "haut" if dy < 0 else "bas"
 
     return {
         "gesture": gesture,
@@ -284,6 +295,7 @@ def classify_hand_gesture(landmarks, history=None):
 @app.websocket("/ws-gesture")
 async def ws_gesture(websocket: WebSocket):
     await websocket.accept()
+    ping_task = asyncio.create_task(ws_ping_keepalive(websocket))
     try:
         history = []
         while True:
@@ -312,3 +324,5 @@ async def ws_gesture(websocket: WebSocket):
                     break
     except WebSocketDisconnect:
         pass
+    finally:
+        ping_task.cancel()

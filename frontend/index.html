@@ -589,9 +589,12 @@
                             muted></video>
                         <canvas id="canvasGesture"></canvas>
                     </div>
-                    <div class="status" style="margin-top: 10px; text-align: left">
+                    <div
+                        class="status"
+                        style="margin-top: 10px; text-align: left">
                         <div>
-                            <span class="dot-state" id="gestureWsDot"></span>Backend :
+                            <span class="dot-state" id="gestureWsDot"></span
+                            >Backend :
                             <b id="gestureWsState">déconnecté</b>
                         </div>
                         <div style="margin-top: 4px">
@@ -613,20 +616,26 @@
                             <span class="movement-arrow" id="arrowUp">↑</span>
                             <span class="movement-arrow" id="arrowDown">↓</span>
                             <span class="movement-arrow" id="arrowLeft">←</span>
-                            <span class="movement-arrow" id="arrowRight">→</span>
-                            <span class="movement-label" id="movementText">statique</span>
+                            <span class="movement-arrow" id="arrowRight"
+                                >→</span
+                            >
+                            <span class="movement-label" id="movementText"
+                                >statique</span
+                            >
                         </div>
-                        <div class="constellation" id="gestureConstellation"></div>
+                        <div
+                            class="constellation"
+                            id="gestureConstellation"></div>
                     </div>
                     <h2 style="font-size: 14px">Historique</h2>
                     <ul class="history" id="gestureHistory"></ul>
                 </div>
             </section>
 
-            <footer>
-                <!-- Backend attendu sur <code>ws://localhost:8000/ws</code> — voir <code>README.md</code> pour lancer le serveur et entraîner le modèle. -->
+            <!-- <footer>
+                Backend attendu sur <code>ws://localhost:8000/ws</code> — voir <code>README.md</code> pour lancer le serveur et entraîner le modèle.
                 Backend attendu sur <code>ws://{URL}/ws</code>
-            </footer>
+            </footer> -->
         </div>
 
         <script type="module">
@@ -747,6 +756,7 @@
                             wsGesture.send(JSON.stringify({ landmarks }));
                         }
                     },
+                    'gestureHandState',
                 );
                 connectWSGesture();
             }
@@ -830,8 +840,9 @@
 
             /* ---------- MediaPipe Hands setup (shared logic for both tabs) ---------- */
             /* ---------- MediaPipe Hands setup (Tasks Vision API — une instance par flux vidéo) ---------- */
-            async function setupHands(videoEl, canvasEl, onResults) {
+            async function setupHands(videoEl, canvasEl, onResults, handStateId) {
                 const ctx = canvasEl.getContext('2d');
+                const stateId = handStateId || 'handState';
 
                 try {
                     const vision = await FilesetResolver.forVisionTasks(
@@ -881,12 +892,12 @@
                                 canvasEl.height,
                             );
                             lastLandmarks = lm.flatMap((p) => [p.x, p.y, p.z]);
-                            document.getElementById('handState').textContent =
+                            document.getElementById(stateId).textContent =
                                 'oui';
                             if (onResults) onResults(lastLandmarks);
                         } else {
                             lastLandmarks = null;
-                            document.getElementById('handState').textContent =
+                            document.getElementById(stateId).textContent =
                                 'non';
                         }
                         requestAnimationFrame(loop);
@@ -1001,12 +1012,21 @@
 
             /* ---------- Backend URL ---------- */
             const _envBackend = localStorage.getItem('asl_backend_url');
-            const _paramBackend = new URLSearchParams(location.search).get('backend');
+            const _paramBackend = new URLSearchParams(location.search).get(
+                'backend',
+            );
             const BACKEND_HOST = _paramBackend || _envBackend || location.host;
-            const BACKEND_PROTO = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-            const WS_BASE = IS_LOCAL ? 'ws://localhost:8000' : `${BACKEND_PROTO}//${BACKEND_HOST}`;
-            const API_BASE = IS_LOCAL ? 'http://localhost:8000' : `${location.protocol}//${BACKEND_HOST}`;
+            const BACKEND_PROTO =
+                location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const IS_LOCAL =
+                location.hostname === 'localhost' ||
+                location.hostname === '127.0.0.1';
+            const WS_BASE = IS_LOCAL
+                ? 'ws://localhost:8000'
+                : `${BACKEND_PROTO}//${BACKEND_HOST}`;
+            const API_BASE = IS_LOCAL
+                ? 'http://localhost:8000'
+                : `${location.protocol}//${BACKEND_HOST}`;
             let ws = null;
             let lastSend = 0;
 
@@ -1047,6 +1067,7 @@
                 };
                 ws.onmessage = (evt) => {
                     const data = JSON.parse(evt.data);
+                    if (data.type === 'ping') return;
                     if (data.error) {
                         document.getElementById('predLabel').textContent = '⚠';
                         document.getElementById('predConf').textContent =
@@ -1124,6 +1145,7 @@
                 };
                 wsFace.onmessage = (evt) => {
                     const data = JSON.parse(evt.data);
+                    if (data.type === 'ping') return;
                     if (data.error) return;
                     document.getElementById('faceEmoji').textContent =
                         data.emoji;
@@ -1141,7 +1163,7 @@
                 };
             }
 
-                document
+            document
                 .getElementById('btnConnectFace')
                 .addEventListener('click', () => {
                     if (wsFace && wsFace.readyState <= 1) {
@@ -1149,7 +1171,9 @@
                         wsFace.close();
                         document.getElementById('faceWsState').textContent =
                             'déconnecté';
-                        document.getElementById('faceWsDot').classList.remove('on');
+                        document
+                            .getElementById('faceWsDot')
+                            .classList.remove('on');
                         document.getElementById('btnConnectFace').textContent =
                             'Se connecter au backend';
                     } else {
@@ -1349,11 +1373,13 @@
             function connectWSGesture() {
                 if (wsGesture && wsGesture.readyState <= 1) return;
                 wsGestureReconnecting = true;
-                document.getElementById('gestureWsState').textContent = 'reconnexion…';
+                document.getElementById('gestureWsState').textContent =
+                    'reconnexion…';
                 wsGesture = new WebSocket(`${WS_BASE}/ws-gesture`);
                 wsGesture.onopen = () => {
                     gestureReconnectAttempts = 0;
-                    document.getElementById('gestureWsState').textContent = 'connecté';
+                    document.getElementById('gestureWsState').textContent =
+                        'connecté';
                     document.getElementById('gestureWsDot').classList.add('on');
                     document.getElementById('btnConnectGesture').textContent =
                         'Se déconnecter';
@@ -1361,7 +1387,9 @@
                 wsGesture.onclose = () => {
                     document.getElementById('gestureWsState').textContent =
                         'déconnecté';
-                    document.getElementById('gestureWsDot').classList.remove('on');
+                    document
+                        .getElementById('gestureWsDot')
+                        .classList.remove('on');
                     document.getElementById('btnConnectGesture').textContent =
                         'Se connecter au backend';
                     if (wsGestureReconnecting) {
@@ -1374,12 +1402,18 @@
                     }
                 };
                 wsGesture.onerror = () => {
-                    document.getElementById('gestureWsState').textContent = 'erreur';
+                    document.getElementById('gestureWsState').textContent =
+                        'erreur';
                 };
                 wsGesture.onmessage = (evt) => {
                     const data = JSON.parse(evt.data);
-                    if (data.error) return;
-                    document.getElementById('gestureHandState').textContent = 'oui';
+                    if (data.type === 'ping') return;
+                    if (data.error) {
+                        document.getElementById('gestureHandState').textContent = 'non';
+                        return;
+                    }
+                    document.getElementById('gestureHandState').textContent =
+                        'oui';
                     document.getElementById('gestureEmoji').textContent =
                         data.emoji;
                     document.getElementById('gestureLabel').textContent =
@@ -1424,9 +1458,12 @@
                         wsGesture.close();
                         document.getElementById('gestureWsState').textContent =
                             'déconnecté';
-                        document.getElementById('gestureWsDot').classList.remove('on');
-                        document.getElementById('btnConnectGesture').textContent =
-                            'Se connecter au backend';
+                        document
+                            .getElementById('gestureWsDot')
+                            .classList.remove('on');
+                        document.getElementById(
+                            'btnConnectGesture',
+                        ).textContent = 'Se connecter au backend';
                     } else {
                         connectWSGesture();
                     }
